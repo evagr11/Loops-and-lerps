@@ -14,7 +14,13 @@ public class TargetList : MonoBehaviour
 
     void Start()
     {
-        instantiatedObject = GameObject.Instantiate(sphere, Vector3.zero, Quaternion.identity).transform;
+        if (points.Length < 2 || colors.Length < points.Length)
+        {
+            Debug.LogWarning("TargetList: hacen falta al menos 2 puntos y un color por cada punto.");
+            return;
+        }
+
+        instantiatedObject = Instantiate(sphere, Vector3.zero, Quaternion.identity).transform;
         instantiatedObjectRenderer = instantiatedObject.GetComponent<Renderer>();
 
         StartCoroutine(Animation());
@@ -35,7 +41,8 @@ public class TargetList : MonoBehaviour
             elapsedTime = 0;
             while (elapsedTime < duration)
             {
-                normalizedElapsedTime = elapsedTime / duration;
+                elapsedTime += Time.deltaTime;
+                normalizedElapsedTime = Mathf.Clamp01(elapsedTime / duration);
 
                 finalValue = Vector3.LerpUnclamped(points[currentPoint].position, points[nextPoint].position, ease.Evaluate(normalizedElapsedTime));
                 instantiatedObject.position = finalValue;
@@ -49,11 +56,10 @@ public class TargetList : MonoBehaviour
                 finalColor = Color.Lerp(colors[currentPoint], colors[nextPoint], ease.Evaluate(normalizedElapsedTime));
                 instantiatedObjectRenderer.material.color = finalColor;
 
-                elapsedTime += Time.deltaTime;
-
-                yield return new WaitForEndOfFrame();
+                yield return null;
             }
 
+            // Pasa al siguiente punto y vuelve al primero al llegar al final de la lista
             currentPoint = nextPoint;
 
             nextPoint = (nextPoint + 1) % points.Length;

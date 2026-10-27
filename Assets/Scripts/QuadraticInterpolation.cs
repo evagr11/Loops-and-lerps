@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class QuadraticInterpolation : MonoBehaviour
@@ -14,47 +13,40 @@ public class QuadraticInterpolation : MonoBehaviour
 
     void Start()
     {
-        instantiatedObject = GameObject.Instantiate(sphere, Vector3.zero, Quaternion.identity).transform;
+        instantiatedObject = Instantiate(sphere, Vector3.zero, Quaternion.identity).transform;
         StartCoroutine(Animation());
+    }
+
+    // Curva de Bézier cuadrática: va de A a B usando C como punto de control.
+    // Se calcula con dos Lerps y un Lerp entre sus resultados
+    Vector3 Bezier(float t)
+    {
+        Vector3 AC = Vector3.Lerp(pointA.position, pointC.position, t);
+        Vector3 CB = Vector3.Lerp(pointC.position, pointB.position, t);
+        return Vector3.Lerp(AC, CB, t);
     }
 
     IEnumerator Animation()
     {
-        float elapsedTime = 0f;
-        float normalizedElapsedTime;
-
         while (true)
         {
+            // Ida: de A a B
+            yield return Recorrer(false);
+            // Vuelta: de B a A por la misma curva
+            yield return Recorrer(true);
+        }
+    }
 
-            while (elapsedTime < duration)
-            {
-                elapsedTime += Time.deltaTime;
+    IEnumerator Recorrer(bool deVuelta)
+    {
+        float elapsedTime = 0f;
 
-                normalizedElapsedTime = elapsedTime / duration;
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
 
-                Vector3 AC = Vector3.Lerp(pointA.position, pointC.position, ease.Evaluate(normalizedElapsedTime));
-                Vector3 CB = Vector3.Lerp(pointC.position, pointB.position, ease.Evaluate(normalizedElapsedTime));
-                instantiatedObject.position = Vector3.Lerp(AC, CB, ease.Evaluate(normalizedElapsedTime));
-
-                yield return new WaitForEndOfFrame();
-            }
-
-            elapsedTime = 0f;
-
-            while (elapsedTime < duration)
-            {
-                elapsedTime += Time.deltaTime;
-
-                normalizedElapsedTime = elapsedTime / duration;
-
-                Vector3 BC = Vector3.Lerp(pointB.position, pointC.position, ease.Evaluate(normalizedElapsedTime));
-                Vector3 CA = Vector3.Lerp(pointC.position, pointA.position, ease.Evaluate(normalizedElapsedTime));
-                instantiatedObject.position = Vector3.Lerp(BC, CA, ease.Evaluate(normalizedElapsedTime));
-
-                yield return new WaitForEndOfFrame();
-            }
-
-            elapsedTime = 0f;
+            float t = ease.Evaluate(Mathf.Clamp01(elapsedTime / duration));
+            instantiatedObject.position = Bezier(deVuelta ? 1f - t : t);
 
             yield return null;
         }

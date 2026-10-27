@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class CubeEdges : MonoBehaviour
@@ -12,34 +11,34 @@ public class CubeEdges : MonoBehaviour
     [SerializeField] GameObject cube;
 
     [SerializeField] float timeBetweenSpawns;
-    Vector3 position = Vector3.zero;
 
-    // Start is called before the first frame update
     void Start()
     {
         StartCoroutine(InstantiateOverTime());
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-    }
-
+    // Recorre todas las posiciones del cubo con tres bucles anidados
+    // y solo instancia un cubo cuando la posición está en una arista
     IEnumerator InstantiateOverTime()
     {
-        for (int i = start; i <= height + start - 1; i++)
-        {
-            for (int j = start; j <= width + start - 1; j++)
-            {
-                for (int k = start; k <= length + start - 1; k++)
-                {
+        int endI = start + height - 1;
+        int endJ = start + width - 1;
+        int endK = start + length - 1;
 
-                    if ((i == start || i == height + start - 1) && (j == start || j == width + start - 1) ||
-                        (j == start || j == width + start - 1) && (k == start || k == length + start - 1) ||
-                        (i == start || i == height + start - 1) && (k == start || k == length + start - 1))
+        for (int i = start; i <= endI; i++)
+        {
+            for (int j = start; j <= endJ; j++)
+            {
+                for (int k = start; k <= endK; k++)
+                {
+                    bool bordeI = i == start || i == endI;
+                    bool bordeJ = j == start || j == endJ;
+                    bool bordeK = k == start || k == endK;
+
+                    // Una arista es donde coinciden al menos dos caras
+                    if ((bordeI && bordeJ) || (bordeJ && bordeK) || (bordeI && bordeK))
                     {
-                        position = new Vector3(i, j, k);
-                        Instantiate(cube, position, Quaternion.identity);
+                        Instantiate(cube, new Vector3(i, j, k), Quaternion.identity);
                         yield return new WaitForSeconds(timeBetweenSpawns);
                     }
                 }
